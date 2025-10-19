@@ -10,6 +10,7 @@ import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Settings from "@/pages/settings";
 import Bookmarks from "@/pages/bookmarks";
+import EmailHistory from "@/pages/email-history";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/settings" component={Settings} />
           <Route path="/bookmarks" component={Bookmarks} />
+          <Route path="/email-history" component={EmailHistory} />
         </>
       )}
       <Route component={NotFound} />

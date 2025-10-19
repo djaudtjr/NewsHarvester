@@ -2,6 +2,8 @@
 import sgMail from '@sendgrid/mail';
 import OpenAI from "openai";
 import PDFDocument from "pdfkit";
+import { writeFile, unlink } from "fs/promises";
+import { join } from "path";
 import { storage } from "./storage";
 import type { Subscription, Article } from "@shared/schema";
 
@@ -49,15 +51,26 @@ async function getUncachableSendGridClient() {
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Generate PDF summary of articles
-export async function generateNewsPDF(articles: Article[], keywords: string[]): Promise<Buffer> {
+// Generate PDF summary of articles and save to disk
+export async function generateNewsPDF(articles: Article[], keywords: string[], subscriptionId: string): Promise<{ buffer: Buffer; path: string }> {
   return new Promise(async (resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50 });
       const chunks: Buffer[] = [];
 
       doc.on('data', (chunk) => chunks.push(chunk));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('end', async () => {
+        try {
+          const buffer = Buffer.concat(chunks);
+          // Save PDF to archives folder
+          const filename = `${subscriptionId}_${Date.now()}.pdf`;
+          const pdfPath = join('server', 'pdf_archives', filename);
+          await writeFile(pdfPath, buffer);
+          resolve({ buffer, path: `/api/pdf-archives/${filename}` });
+        } catch (error) {
+          reject(error);
+        }
+      });
       doc.on('error', reject);
 
       // Title
@@ -123,11 +136,15 @@ export async function sendNewsSummaryEmail(
   userEmail: string,
   articles: Article[]
 ): Promise<void> {
+  let pdfPath: string | undefined;
+  
   try {
     const { client, fromEmail } = await getUncachableSendGridClient();
 
-    // Generate PDF
-    const pdfBuffer = await generateNewsPDF(articles, subscription.keywords);
+    // Generate PDF and save to archives
+    const pdfResult = await generateNewsPDF(articles, subscription.keywords, subscription.id);
+    const pdfBuffer = pdfResult.buffer;
+    pdfPath = pdfResult.path;
 
     // Prepare email
     const msg = {
@@ -161,11 +178,26 @@ export async function sendNewsSummaryEmail(
       subscriptionId: subscription.id,
       status: 'sent',
       articleCount: articles.length,
+      pdfPath,
     });
   } catch (error) {
     console.error("Error sending email:", error);
     
-    // Log failed email delivery
+    // Delete orphaned PDF if it exists
+    if (pdfPath) {
+      try {
+        const filename = pdfPath.split('/').pop();
+        if (filename) {
+          const filePath = join(process.cwd(), 'server', 'pdf_archives', filename);
+          await unlink(filePath);
+          console.log(`Deleted orphaned PDF: ${filename}`);
+        }
+      } catch (cleanupError) {
+        console.error("Error cleaning up PDF:", cleanupError);
+      }
+    }
+    
+    // Log failed email delivery (without pdfPath since we deleted it)
     await storage.createEmailLog({
       subscriptionId: subscription.id,
       status: 'failed',

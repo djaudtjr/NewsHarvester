@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery, useInfiniteQuery, useMutation } from "@tanstack/react-query";
-import { Newspaper, LogOut, RefreshCw, Settings, Bookmark, Loader2 } from "lucide-react";
+import { Newspaper, LogOut, RefreshCw, Settings, Bookmark, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -277,6 +277,14 @@ export default function Home() {
               onNew={() => setSubscriptionModalOpen(true)}
               onDelete={(id) => deleteSubscription.mutate(id)}
             />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocation("/email-history")}
+              data-testid="button-email-history"
+            >
+              <Mail className="h-5 w-5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"

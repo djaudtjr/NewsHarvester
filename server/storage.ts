@@ -50,7 +50,9 @@ export interface IStorage {
     status: string;
     articleCount: number;
     errorMessage?: string;
+    pdfPath?: string;
   }): Promise<EmailLog>;
+  getEmailLogsByUserId(userId: string): Promise<(EmailLog & { subscription: Subscription })[]>;
   
   // User preferences operations
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
@@ -207,12 +209,27 @@ export class DatabaseStorage implements IStorage {
     status: string;
     articleCount: number;
     errorMessage?: string;
+    pdfPath?: string;
   }): Promise<EmailLog> {
     const [created] = await db
       .insert(emailLogs)
       .values(log)
       .returning();
     return created;
+  }
+
+  async getEmailLogsByUserId(userId: string): Promise<(EmailLog & { subscription: Subscription })[]> {
+    const logs = await db
+      .select()
+      .from(emailLogs)
+      .innerJoin(subscriptions, eq(emailLogs.subscriptionId, subscriptions.id))
+      .where(eq(subscriptions.userId, userId))
+      .orderBy(desc(emailLogs.sentAt));
+    
+    return logs.map((row) => ({
+      ...row.email_logs,
+      subscription: row.subscriptions,
+    }));
   }
 
   // User preferences operations

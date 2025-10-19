@@ -1,6 +1,7 @@
 // Reference: Replit Auth blueprint - Routes with authentication
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { join } from "path";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { searchNews, getTrendingTopics } from "./newsService";
@@ -240,6 +241,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting bookmark:", error);
       res.status(500).json({ message: "Failed to delete bookmark" });
+    }
+  });
+
+  // Get email delivery history
+  app.get("/api/email-logs", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const logs = await storage.getEmailLogsByUserId(userId);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching email logs:", error);
+      res.status(500).json({ message: "Failed to fetch email logs" });
+    }
+  });
+
+  // Serve archived PDF files
+  app.get("/api/pdf-archives/:filename", isAuthenticated, async (req: any, res) => {
+    try {
+      const { filename } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Verify user has access to this PDF (check if it's from their subscription)
+      const logs = await storage.getEmailLogsByUserId(userId);
+      const hasAccess = logs.some((log) => log.pdfPath === `/api/pdf-archives/${filename}`);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const pdfPath = join(process.cwd(), 'server', 'pdf_archives', filename);
+      res.sendFile(pdfPath);
+    } catch (error) {
+      console.error("Error serving PDF:", error);
+      res.status(404).json({ message: "PDF not found" });
     }
   });
 

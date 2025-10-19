@@ -98,6 +98,7 @@ export const emailLogs = pgTable("email_logs", {
   status: varchar("status").notNull(), // "sent", "failed"
   articleCount: integer("article_count").default(0),
   errorMessage: text("error_message"),
+  pdfPath: text("pdf_path"), // Path to archived PDF file
 });
 
 export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
