@@ -91,7 +91,7 @@ export async function generateNewsPDF(articles: Article[], keywords: string[], s
         if (article.description) {
           try {
             const summary = await openai.chat.completions.create({
-              model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025
+              model: "gpt-5-mini", // Using gpt-5-mini for cost-effective article summarization
               messages: [
                 {
                   role: "system",
