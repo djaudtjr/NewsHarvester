@@ -18,6 +18,8 @@ A comprehensive news aggregation application that collects articles from multipl
 - **Scheduled PDF Generation**: Creates PDF summaries 1 hour before delivery time using OpenAI for article summarization
 - **Automated Delivery**: Sends emails via SendGrid at user-specified times
 - **Subscription Management**: Full CRUD operations for email subscriptions
+- **Email Delivery History**: Dashboard showing past email deliveries with status, dates, and downloadable PDF archives
+- **PDF Archive Management**: Automatically saves successful PDFs and cleans up orphaned files on delivery failures
 
 ## Project Structure
 
@@ -152,6 +154,7 @@ Follows Material Design principles with:
 
 1. **News Discovery**: Login → Search keyword → View results → Bookmark interesting articles → Click to read original
 2. **Subscription Setup**: Login → Email indicator → Add subscription → Configure keywords & time
-3. **Email Delivery**: System searches keywords → Generates PDF → Sends at scheduled time
-4. **Personalization**: Login → Settings → Configure favorite sources/categories → Save preferences
-5. **Bookmarks**: Login → Search news → Click bookmark icon → View saved articles in bookmarks page
+3. **Email Delivery**: System searches keywords → Generates PDF → Sends at scheduled time → Archives PDF
+4. **Email History**: Login → Email history button → View past deliveries → Download PDF archives
+5. **Personalization**: Login → Settings → Configure favorite sources/categories → Save preferences
+6. **Bookmarks**: Login → Search news → Click bookmark icon → View saved articles in bookmarks page
