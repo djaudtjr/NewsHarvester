@@ -118,6 +118,7 @@ export function SearchFilterPanel({ onSearch, isLoading }: SearchFilterPanelProp
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">모든 소스</SelectItem>
+              <SelectItem value="newsapi">NewsAPI</SelectItem>
               <SelectItem value="naver">Naver</SelectItem>
               <SelectItem value="bing">Bing</SelectItem>
             </SelectContent>

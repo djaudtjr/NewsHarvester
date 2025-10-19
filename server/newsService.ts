@@ -3,10 +3,11 @@ import type { InsertArticle, TrendData } from "@shared/schema";
 import { storage } from "./storage";
 
 /*
- * NOTE: This implementation uses realistic mock data to demonstrate the full workflow.
- * In production, replace these functions with real API integrations:
- * - Naver News API: https://developers.naver.com/docs/serviceapi/search/news/
- * - Bing News Search API: https://learn.microsoft.com/en-us/bing/search-apis/bing-news-search/
+ * Multi-source news aggregation service
+ * Supported sources:
+ * - NewsAPI: Real-time news from 80,000+ sources (https://newsapi.org)
+ * - Naver News API: Korean news (mock - requires registration)
+ * - Bing News Search API: International news (mock - requires registration)
  */
 
 // Simulated Naver News API with more realistic data
@@ -71,6 +72,66 @@ async function searchBingNews(keyword: string, startDate?: string, endDate?: str
   return articles;
 }
 
+// NewsAPI integration - Real-time news from 80,000+ sources worldwide
+async function searchNewsAPI(keyword: string, startDate?: string, endDate?: string): Promise<InsertArticle[]> {
+  const apiKey = process.env.NEWSAPI_KEY;
+  
+  if (!apiKey) {
+    console.log('[NewsService] NewsAPI key not configured, skipping NewsAPI source');
+    return [];
+  }
+
+  try {
+    // NewsAPI endpoint: https://newsapi.org/docs/endpoints/everything
+    const params: any = {
+      q: keyword,
+      apiKey: apiKey,
+      language: 'en', // Can be made configurable
+      sortBy: 'publishedAt',
+      pageSize: 10,
+    };
+
+    if (startDate) {
+      params.from = startDate; // Format: YYYY-MM-DD
+    }
+    if (endDate) {
+      params.to = endDate; // Format: YYYY-MM-DD
+    }
+
+    const response = await axios.get('https://newsapi.org/v2/everything', {
+      params,
+      timeout: 10000,
+    });
+
+    if (response.data.status !== 'ok') {
+      console.error('[NewsService] NewsAPI error:', response.data);
+      return [];
+    }
+
+    const articles: InsertArticle[] = response.data.articles.map((item: any) => ({
+      title: item.title || 'Untitled',
+      description: item.description || item.content || '',
+      url: item.url,
+      imageUrl: item.urlToImage || `https://placehold.co/600x400/1e40af/white?text=NewsAPI`,
+      source: 'newsapi',
+      publishedAt: new Date(item.publishedAt),
+      category: 'general', // NewsAPI doesn't provide category in everything endpoint
+    }));
+
+    console.log(`[NewsService] Fetched ${articles.length} articles from NewsAPI`);
+    return articles;
+  } catch (error: any) {
+    if (error.response?.status === 429) {
+      console.error('[NewsService] NewsAPI rate limit exceeded');
+    } else if (error.response?.status === 401) {
+      console.error('[NewsService] NewsAPI invalid API key');
+    } else {
+      console.error('[NewsService] NewsAPI error:', error.message);
+    }
+    return [];
+  }
+}
+
 /*
  * Deduplication algorithm: Selects most recent and accurate article from duplicates
  * Production implementation should use more sophisticated techniques:
@@ -122,12 +183,21 @@ export async function searchNews(params: {
   let allArticles: InsertArticle[] = [];
 
   // Fetch from different sources based on filter
+  // NewsAPI - real-time international news
+  if (source === "newsapi" || source === "all" || !source) {
+    const newsApiArticles = await searchNewsAPI(keyword, startDate, endDate);
+    console.log(`[NewsService] Fetched ${newsApiArticles.length} articles from NewsAPI`);
+    allArticles.push(...newsApiArticles);
+  }
+
+  // Naver - Korean news (mock implementation)
   if (source === "naver" || source === "all" || !source) {
     const naverArticles = await searchNaverNews(keyword, startDate, endDate);
     console.log(`[NewsService] Fetched ${naverArticles.length} articles from Naver`);
     allArticles.push(...naverArticles);
   }
 
+  // Bing - international news (mock implementation)
   if (source === "bing" || source === "all" || !source) {
     const bingArticles = await searchBingNews(keyword, startDate, endDate);
     console.log(`[NewsService] Fetched ${bingArticles.length} articles from Bing`);
