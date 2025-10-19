@@ -13,10 +13,11 @@ import { NewsCard } from "@/components/news-card";
 import { NewsCardSkeleton } from "@/components/news-card-skeleton";
 import { SubscriptionModal } from "@/components/subscription-modal";
 import { EmailStatusIndicator } from "@/components/email-status-indicator";
-import type { Article, TrendData, Subscription, InsertSubscription, Bookmark as BookmarkType } from "@shared/schema";
+import type { Article, TrendData, Subscription, InsertSubscription, Bookmark as BookmarkType, User } from "@shared/schema";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface PaginatedResponse {
   articles: Article[];
@@ -37,6 +38,14 @@ export default function Home() {
     keyword: "",
     source: "all",
   });
+
+  // Fetch current user for notifications
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+  });
+
+  // Connect to real-time notifications
+  useNotifications(user?.id || null);
 
   // Fetch trending data
   const { data: trends, isLoading: trendsLoading } = useQuery<TrendData[]>({

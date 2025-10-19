@@ -28,10 +28,10 @@ export interface IStorage {
   
   // Subscription operations
   getSubscriptions(userId: string): Promise<Subscription[]>;
+  getAllActiveSubscriptions(): Promise<Subscription[]>; // For notification monitoring
   getSubscription(id: string): Promise<Subscription | undefined>;
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   deleteSubscription(id: string): Promise<void>;
-  getAllActiveSubscriptions(): Promise<Subscription[]>;
   
   // Article operations
   getArticles(limit?: number): Promise<Article[]>;

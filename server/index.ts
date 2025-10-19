@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupWebSocketServer } from "./websocket";
+import { startBreakingNewsMonitor } from "./notificationService";
 
 const app = express();
 app.use(express.json());
@@ -46,6 +48,12 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
+
+  // Setup WebSocket server for real-time notifications
+  setupWebSocketServer(server);
+
+  // Start breaking news monitoring service
+  startBreakingNewsMonitor();
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
