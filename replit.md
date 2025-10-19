@@ -5,7 +5,7 @@ A comprehensive news aggregation application that collects articles from multipl
 ## Features
 
 ### Core Functionality
-- **Multi-Source News Search**: Integrates with NewsAPI, Naver, and Bing News APIs to fetch articles
+- **Multi-Source News Search**: Integrates with NewsAPI (80,000+ international sources) and Naver News API (Korean news) to fetch articles
 - **Smart Deduplication**: Removes duplicate articles by comparing normalized titles and selecting the most recent/accurate version
 - **Real-time Trending Dashboard**: Shows popular categories based on Naver Data Lab or aggregated article data
 - **Advanced Search Filters**: Search by keyword, date range, and specific news source
@@ -115,14 +115,16 @@ npm run db:push
 
 ## Production Deployment Notes
 
-### Real API Integration
-Replace mock implementations in `server/newsService.ts` with:
-1. **Naver News API**:
-   - Register at https://developers.naver.com/
-   - Add `NAVER_CLIENT_ID` and `NAVER_CLIENT_SECRET` env vars
-   - Uncomment production code in `searchNaverNews()`
+### Real API Integration Status
+✅ **Active APIs**:
+1. **NewsAPI**: Integrated and active (80,000+ international sources)
+   - API key configured via `NEWSAPI_KEY`
+   
+2. **Naver News API**: Integrated and active (Korean news)
+   - Credentials configured via `NAVER_CLIENT_ID` and `NAVER_CLIENT_SECRET`
 
-2. **Bing News Search API**:
+🔄 **Pending Integration**:
+1. **Bing News Search API**:
    - Register at https://portal.azure.com
    - Add `BING_API_KEY` env var
    - Uncomment production code in `searchBingNews()`

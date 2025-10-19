@@ -5,42 +5,69 @@ import { storage } from "./storage";
 /*
  * Multi-source news aggregation service
  * Supported sources:
- * - NewsAPI: Real-time news from 80,000+ sources (https://newsapi.org)
- * - Naver News API: Korean news (mock - requires registration)
+ * - NewsAPI: Real-time news from 80,000+ international sources (https://newsapi.org)
+ * - Naver News API: Korean news from Naver (https://developers.naver.com)
  * - Bing News Search API: International news (mock - requires registration)
  */
 
-// Simulated Naver News API with more realistic data
+// Naver News API - Korean news source
 async function searchNaverNews(keyword: string, startDate?: string, endDate?: string): Promise<InsertArticle[]> {
-  /*
-   * Production implementation would be:
-   * const response = await axios.get('https://openapi.naver.com/v1/search/news.json', {
-   *   headers: {
-   *     'X-Naver-Client-Id': process.env.NAVER_CLIENT_ID,
-   *     'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET,
-   *   },
-   *   params: { query: keyword, display: 10, start: 1, sort: 'date' }
-   * });
-   * return response.data.items.map(item => ({ ... }));
-   */
+  const clientId = process.env.NAVER_CLIENT_ID;
+  const clientSecret = process.env.NAVER_CLIENT_SECRET;
   
-  // Realistic mock data demonstrating the expected structure
-  const articles: InsertArticle[] = [];
-  const now = Date.now();
-  
-  for (let i = 0; i < 3; i++) {
-    articles.push({
-      title: `[네이버뉴스] ${keyword} 관련 ${['기술 혁신', '시장 동향', '정책 변화'][i % 3]} 분석`,
-      description: `${keyword}에 대한 최신 ${['기술적', '경제적', '정책적'][i % 3]} 분석 결과가 공개되었습니다. 전문가들은 향후 시장 전망에 대해 긍정적인 의견을 제시했습니다.`,
-      url: `https://news.naver.com/main/read.nhn?mode=LSD&mid=sec&sid1=105&oid=001&aid=${now + i}`,
-      imageUrl: `https://placehold.co/600x400/0066cc/white?text=Naver+${i + 1}`,
-      source: "naver",
-      publishedAt: new Date(now - (i * 15 * 60 * 1000)), // 15 min intervals
-      category: ["technology", "business", "general"][i % 3] as any,
-    });
+  if (!clientId || !clientSecret) {
+    console.log('[NewsService] Naver API credentials not configured, skipping Naver source');
+    return [];
   }
 
-  return articles;
+  try {
+    // Naver Search API: https://developers.naver.com/docs/serviceapi/search/news/news.md
+    const response = await axios.get('https://openapi.naver.com/v1/search/news.json', {
+      headers: {
+        'X-Naver-Client-Id': clientId,
+        'X-Naver-Client-Secret': clientSecret,
+      },
+      params: {
+        query: keyword,
+        display: 10, // Number of results (max 100)
+        start: 1, // Start position
+        sort: 'date', // Sort by date (or 'sim' for relevance)
+      },
+      timeout: 10000,
+    });
+
+    if (!response.data.items) {
+      console.error('[NewsService] Naver API error: No items in response');
+      return [];
+    }
+
+    // Helper function to strip HTML tags from text
+    const stripHtml = (html: string) => {
+      return html.replace(/<\/?[^>]+(>|$)/g, '');
+    };
+
+    const articles: InsertArticle[] = response.data.items.map((item: any) => ({
+      title: stripHtml(item.title || 'Untitled'),
+      description: stripHtml(item.description || ''),
+      url: item.link || item.originallink,
+      imageUrl: null, // Naver News API doesn't provide images in basic search
+      source: 'naver',
+      publishedAt: new Date(item.pubDate),
+      category: 'general', // Naver doesn't provide category in search API
+    }));
+
+    console.log(`[NewsService] Fetched ${articles.length} articles from Naver`);
+    return articles;
+  } catch (error: any) {
+    if (error.response?.status === 429) {
+      console.error('[NewsService] Naver API rate limit exceeded');
+    } else if (error.response?.status === 401) {
+      console.error('[NewsService] Naver API authentication failed - check credentials');
+    } else {
+      console.error('[NewsService] Naver API error:', error.message);
+    }
+    return [];
+  }
 }
 
 // Simulated Bing News API with realistic data
