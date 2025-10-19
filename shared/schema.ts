@@ -79,6 +79,7 @@ export const articles = pgTable("articles", {
   publishedAt: timestamp("published_at").notNull(),
   content: text("content"), // Full text content if available
   category: varchar("category"), // tech, business, sports, etc.
+  embedding: jsonb("embedding"), // OpenAI embedding vector for semantic similarity
   createdAt: timestamp("created_at").defaultNow(),
 });
 

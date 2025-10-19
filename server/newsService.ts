@@ -1,6 +1,8 @@
 import axios from "axios";
 import type { InsertArticle, TrendData } from "@shared/schema";
 import { storage } from "./storage";
+import { generateArticleEmbedding, areArticlesSimilar } from "./embeddingService";
+import pLimit from "p-limit";
 
 /*
  * Multi-source news aggregation service
@@ -160,15 +162,20 @@ async function searchNewsAPI(keyword: string, startDate?: string, endDate?: stri
 }
 
 /*
- * Deduplication algorithm: Selects most recent and accurate article from duplicates
- * Production implementation should use more sophisticated techniques:
- * - Fuzzy string matching (e.g., Levenshtein distance)
- * - Title normalization (remove punctuation, lowercase)
- * - Content similarity scoring
- * - Source reputation weighting
+ * AI-powered deduplication algorithm using OpenAI embeddings
+ * Two-phase approach:
+ * 1. Fast title-based deduplication (removes exact/near-exact duplicates)
+ * 2. AI semantic similarity using OpenAI embeddings (catches paraphrased content)
+ * 
+ * This catches duplicates like:
+ * - "Apple announces new iPhone" vs "New iPhone revealed by Apple"
+ * - "경찰, 용의자 체포" vs "용의자 검거...경찰 발표"
  */
-function deduplicateArticles(articles: InsertArticle[]): InsertArticle[] {
-  const seen = new Map<string, InsertArticle>();
+async function deduplicateArticles(articles: InsertArticle[]): Promise<InsertArticle[]> {
+  console.log(`[Deduplication] Starting with ${articles.length} articles`);
+  
+  // Phase 1: Fast title-based deduplication
+  const titleDeduped = new Map<string, InsertArticle>();
 
   for (const article of articles) {
     // Normalize title for comparison (remove special chars, lowercase, trim)
@@ -178,19 +185,80 @@ function deduplicateArticles(articles: InsertArticle[]): InsertArticle[] {
       .trim()
       .slice(0, 50);
 
-    if (!seen.has(normalizedTitle)) {
-      seen.set(normalizedTitle, article);
+    if (!titleDeduped.has(normalizedTitle)) {
+      titleDeduped.set(normalizedTitle, article);
     } else {
-      const existing = seen.get(normalizedTitle)!;
-      // Selection criteria: prefer more recent article
-      // In production, also consider source reputation, content length, etc.
+      const existing = titleDeduped.get(normalizedTitle)!;
+      // Keep more recent article
       if (new Date(article.publishedAt) > new Date(existing.publishedAt)) {
-        seen.set(normalizedTitle, article);
+        titleDeduped.set(normalizedTitle, article);
       }
     }
   }
 
-  return Array.from(seen.values());
+  const afterTitleDedup = Array.from(titleDeduped.values());
+  console.log(`[Deduplication] After title dedup: ${afterTitleDedup.length} articles`);
+
+  // Phase 2: AI semantic deduplication using embeddings
+  // Fast-fail if OpenAI API key is missing
+  if (!process.env.OPENAI_API_KEY) {
+    console.warn('[Deduplication] OpenAI API key not configured, skipping semantic deduplication');
+    return afterTitleDedup;
+  }
+
+  // Parallelize embedding generation with bounded concurrency
+  // Limit to 10 concurrent requests to respect rate limits and avoid timeouts
+  const limit = pLimit(10);
+  const embeddingPromises = afterTitleDedup.map((article) =>
+    limit(async () => {
+      const embedding = await generateArticleEmbedding(article.title, article.description || null);
+      return { article, embedding: embedding || [] };
+    })
+  );
+
+  // Wait for all embeddings to be generated in parallel
+  const embeddingResults = await Promise.all(embeddingPromises);
+  
+  // Check if any embeddings were successfully generated
+  const successfulEmbeddings = embeddingResults.filter(r => r.embedding.length > 0).length;
+  console.log(`[Deduplication] Generated ${successfulEmbeddings}/${afterTitleDedup.length} embeddings`);
+  
+  if (successfulEmbeddings === 0) {
+    console.warn('[Deduplication] All embedding generation failed, skipping semantic deduplication');
+    return afterTitleDedup;
+  }
+
+  // Find semantically similar articles using cosine similarity
+  const semanticDeduped: Array<{ article: InsertArticle; embedding: number[] }> = [];
+
+  for (const item of embeddingResults) {
+    // Check if this article is similar to any previously kept article
+    let isDuplicate = false;
+    
+    for (const kept of semanticDeduped) {
+      if (item.embedding.length > 0 && kept.embedding.length > 0) {
+        if (areArticlesSimilar(item.embedding, kept.embedding)) {
+          isDuplicate = true;
+          // Keep the more recent one
+          if (new Date(item.article.publishedAt) > new Date(kept.article.publishedAt)) {
+            // Replace with newer article
+            const index = semanticDeduped.indexOf(kept);
+            semanticDeduped[index] = item;
+          }
+          break;
+        }
+      }
+    }
+
+    if (!isDuplicate) {
+      semanticDeduped.push(item);
+    }
+  }
+
+  console.log(`[Deduplication] After semantic dedup: ${semanticDeduped.length} articles`);
+
+  // Return articles with embeddings attached (will be stored in database)
+  return semanticDeduped.map(item => ({ ...item.article, embedding: item.embedding }));
 }
 
 /*
@@ -231,8 +299,8 @@ export async function searchNews(params: {
     allArticles.push(...bingArticles);
   }
 
-  // Deduplicate articles based on title similarity
-  const deduplicated = deduplicateArticles(allArticles);
+  // Deduplicate articles using AI-powered semantic similarity
+  const deduplicated = await deduplicateArticles(allArticles);
   console.log(`[NewsService] Deduplicated to ${deduplicated.length} unique articles`);
 
   // Persist articles to database and return with IDs
