@@ -26,23 +26,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // News search endpoint
+  // News search endpoint with pagination
   app.get("/api/news/search", async (req, res) => {
     try {
-      const { keyword, startDate, endDate, source = "all" } = req.query;
+      const { keyword, startDate, endDate, source = "all", page = "1", pageSize = "20" } = req.query;
 
       if (!keyword || typeof keyword !== "string") {
         return res.status(400).json({ message: "Keyword is required" });
       }
 
-      const articles = await searchNews({
+      const pageNum = parseInt(page as string, 10);
+      const size = parseInt(pageSize as string, 10);
+
+      if (isNaN(pageNum) || pageNum < 1) {
+        return res.status(400).json({ message: "Invalid page number" });
+      }
+
+      if (isNaN(size) || size < 1 || size > 100) {
+        return res.status(400).json({ message: "Invalid page size (1-100)" });
+      }
+
+      const allArticles = await searchNews({
         keyword,
         startDate: startDate as string,
         endDate: endDate as string,
         source: source as string,
       });
 
-      res.json(articles);
+      // Calculate pagination
+      const startIndex = (pageNum - 1) * size;
+      const endIndex = startIndex + size;
+      const paginatedArticles = allArticles.slice(startIndex, endIndex);
+      const hasMore = endIndex < allArticles.length;
+
+      res.json({
+        articles: paginatedArticles,
+        pagination: {
+          page: pageNum,
+          pageSize: size,
+          total: allArticles.length,
+          hasMore,
+        },
+      });
     } catch (error) {
       console.error("Error searching news:", error);
       res.status(500).json({ message: "Failed to search news" });

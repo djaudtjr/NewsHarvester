@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Newspaper, LogOut, RefreshCw, Settings, Bookmark } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { useQuery, useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import { Newspaper, LogOut, RefreshCw, Settings, Bookmark, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -14,6 +14,17 @@ import { EmailStatusIndicator } from "@/components/email-status-indicator";
 import type { Article, TrendData, Subscription, InsertSubscription, Bookmark as BookmarkType } from "@shared/schema";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+
+interface PaginatedResponse {
+  articles: Article[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasMore: boolean;
+  };
+}
 
 export default function Home() {
   const { toast } = useToast();
@@ -29,29 +40,53 @@ export default function Home() {
     queryKey: ["/api/trends"],
   });
 
-  // Fetch news articles
-  const buildSearchUrl = () => {
+  // Fetch news articles with infinite scroll
+  const buildSearchUrl = (page: number) => {
     const params = new URLSearchParams();
     if (searchParams.keyword) params.append("keyword", searchParams.keyword);
     if (searchParams.startDate) {
-      // Convert to ISO date format (YYYY-MM-DD)
       params.append("startDate", new Date(searchParams.startDate).toISOString().split('T')[0]);
     }
     if (searchParams.endDate) {
-      // Convert to ISO date format (YYYY-MM-DD)
       params.append("endDate", new Date(searchParams.endDate).toISOString().split('T')[0]);
     }
     if (searchParams.source && searchParams.source !== "all") params.append("source", searchParams.source);
+    params.append("page", page.toString());
+    params.append("pageSize", "20");
     return `/api/news/search?${params.toString()}`;
   };
 
   const {
-    data: articles,
+    data: articlesData,
     isLoading: articlesLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
     refetch: refetchArticles,
-  } = useQuery<Article[]>({
-    queryKey: [buildSearchUrl()],
+  } = useInfiniteQuery<PaginatedResponse>({
+    queryKey: ["articles", searchParams],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await fetch(buildSearchUrl(pageParam as number));
+      if (!response.ok) throw new Error("Failed to fetch articles");
+      return response.json();
+    },
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined;
+    },
     enabled: !!searchParams.keyword,
+    initialPageParam: 1,
+  });
+
+  // Flatten all pages into single array
+  const articles = useMemo(() => {
+    return articlesData?.pages.flatMap((page) => page.articles) || [];
+  }, [articlesData]);
+
+  // Infinite scroll trigger
+  const loadMoreRef = useInfiniteScroll({
+    onLoadMore: () => fetchNextPage(),
+    hasMore: hasNextPage || false,
+    isLoading: isFetchingNextPage,
   });
 
   // Fetch subscriptions
@@ -66,7 +101,7 @@ export default function Home() {
 
   // Create set of bookmarked article IDs for quick lookup
   const bookmarkedArticleIds = useMemo(() => {
-    return new Set(bookmarks.map((b) => b.articleId));
+    return new Set(bookmarks.map((b: BookmarkType & { article: Article }) => b.articleId));
   }, [bookmarks]);
 
   // Create subscription mutation
@@ -171,7 +206,7 @@ export default function Home() {
   // Delete bookmark mutation
   const deleteBookmark = useMutation({
     mutationFn: async (articleId: string) => {
-      const bookmark = bookmarks.find((b) => b.articleId === articleId);
+      const bookmark = bookmarks.find((b: BookmarkType & { article: Article }) => b.articleId === articleId);
       if (bookmark) {
         await apiRequest("DELETE", `/api/bookmarks/${bookmark.id}`, undefined);
       }
@@ -307,7 +342,7 @@ export default function Home() {
           ) : articles && articles.length > 0 ? (
             <>
               <div className="mb-4 text-sm text-muted-foreground">
-                {articles.length}개의 기사를 찾았습니다
+                {articlesData?.pages[0].pagination.total || articles.length}개의 기사를 찾았습니다
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {articles.map((article) => (
@@ -320,6 +355,30 @@ export default function Home() {
                   />
                 ))}
               </div>
+              
+              {/* Infinite scroll trigger */}
+              {hasNextPage && (
+                <div
+                  ref={loadMoreRef}
+                  className="flex justify-center items-center py-8"
+                  data-testid="infinite-scroll-trigger"
+                >
+                  {isFetchingNextPage ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span>더 많은 기사 불러오는 중...</span>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchNextPage()}
+                      data-testid="button-load-more"
+                    >
+                      더 보기
+                    </Button>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <div className="text-center py-16">

@@ -9,6 +9,7 @@ A comprehensive news aggregation application that collects articles from multipl
 - **Smart Deduplication**: Removes duplicate articles by comparing normalized titles and selecting the most recent/accurate version
 - **Real-time Trending Dashboard**: Shows popular categories based on Naver Data Lab or aggregated article data
 - **Advanced Search Filters**: Search by keyword, date range, and specific news source
+- **Infinite Scroll Pagination**: Smooth infinite scroll for loading more articles as you browse with automatic and manual loading options
 - **Personalized Email Subscriptions**: Users can subscribe to specific keywords and receive daily PDF summaries
 - **User Preferences**: Save favorite news sources, categories, and language preferences for personalized search defaults
 - **Article Bookmarking**: Save interesting articles to read later with dedicated bookmarks page
