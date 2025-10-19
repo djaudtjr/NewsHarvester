@@ -1,10 +1,12 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery, useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { Newspaper, LogOut, RefreshCw, Settings, Bookmark, Loader2, Mail } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle } from "@/components/language-toggle";
 import { TrendingDashboard, TrendingDashboardSkeleton } from "@/components/trending-dashboard";
 import { SearchFilterPanel, type SearchFilters } from "@/components/search-filter-panel";
 import { NewsCard } from "@/components/news-card";
@@ -27,6 +29,7 @@ interface PaginatedResponse {
 }
 
 export default function Home() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
@@ -112,8 +115,8 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/subscriptions"] });
       toast({
-        title: "구독 추가 완료",
-        description: "이메일 구독이 성공적으로 추가되었습니다.",
+        title: t('subscriptions.createSuccess'),
+        description: t('subscriptions.createSuccess'),
       });
     },
     onError: (error: Error) => {
@@ -129,8 +132,8 @@ export default function Home() {
         return;
       }
       toast({
-        title: "오류",
-        description: "구독 추가 중 오류가 발생했습니다.",
+        title: t('common.error'),
+        description: t('subscriptions.createError'),
         variant: "destructive",
       });
     },
@@ -144,8 +147,8 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/subscriptions"] });
       toast({
-        title: "구독 삭제 완료",
-        description: "이메일 구독이 삭제되었습니다.",
+        title: t('subscriptions.deleteSuccess'),
+        description: t('subscriptions.deleteSuccess'),
       });
     },
     onError: (error: Error) => {
@@ -161,8 +164,8 @@ export default function Home() {
         return;
       }
       toast({
-        title: "오류",
-        description: "구독 삭제 중 오류가 발생했습니다.",
+        title: t('common.error'),
+        description: t('subscriptions.deleteError'),
         variant: "destructive",
       });
     },
@@ -181,8 +184,8 @@ export default function Home() {
       if (data === null) return; // Already bookmarked, skip toast
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       toast({
-        title: "북마크 추가",
-        description: "기사가 저장되었습니다.",
+        title: t('article.bookmarked'),
+        description: t('article.bookmarked'),
       });
     },
     onError: (error: any) => {
@@ -196,8 +199,8 @@ export default function Home() {
         return; // Silently refresh bookmarks
       }
       toast({
-        title: "오류",
-        description: "북마크 추가 중 오류가 발생했습니다.",
+        title: t('common.error'),
+        description: t('common.error'),
         variant: "destructive",
       });
     },
@@ -214,8 +217,8 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       toast({
-        title: "북마크 삭제",
-        description: "기사 저장이 취소되었습니다.",
+        title: t('bookmarks.removeSuccess'),
+        description: t('bookmarks.removeSuccess'),
       });
     },
     onError: (error: Error) => {
@@ -224,8 +227,8 @@ export default function Home() {
         return;
       }
       toast({
-        title: "오류",
-        description: "북마크 삭제 중 오류가 발생했습니다.",
+        title: t('common.error'),
+        description: t('bookmarks.removeError'),
         variant: "destructive",
       });
     },
@@ -259,7 +262,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Newspaper className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">뉴스 수집기</h1>
+            <h1 className="text-xl font-bold">{t('landing.title')}</h1>
           </div>
 
           <div className="flex items-center gap-2">
@@ -277,6 +280,8 @@ export default function Home() {
               onNew={() => setSubscriptionModalOpen(true)}
               onDelete={(id) => deleteSubscription.mutate(id)}
             />
+            <LanguageToggle />
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
@@ -301,14 +306,13 @@ export default function Home() {
             >
               <Settings className="h-5 w-5" />
             </Button>
-            <ThemeToggle />
             <Button
               variant="outline"
               onClick={handleLogout}
               data-testid="button-logout"
             >
               <LogOut className="h-4 w-4 mr-2" />
-              로그아웃
+              {t('common.logout')}
             </Button>
           </div>
         </div>
@@ -335,10 +339,10 @@ export default function Home() {
             <div className="text-center py-16">
               <Newspaper className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">
-                키워드를 입력하여 뉴스를 검색하세요
+                {t('home.searchPlaceholder')}
               </h2>
               <p className="text-muted-foreground">
-                Naver, Bing 등 여러 소스에서 뉴스를 검색할 수 있습니다
+                {t('landing.features.multiSource.description')}
               </p>
             </div>
           ) : articlesLoading ? (
@@ -350,7 +354,7 @@ export default function Home() {
           ) : articles && articles.length > 0 ? (
             <>
               <div className="mb-4 text-sm text-muted-foreground">
-                {articlesData?.pages[0].pagination.total || articles.length}개의 기사를 찾았습니다
+                {articlesData?.pages[0].pagination.total || articles.length} {t('emailHistory.articles')}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {articles.map((article) => (
@@ -374,7 +378,7 @@ export default function Home() {
                   {isFetchingNextPage ? (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>더 많은 기사 불러오는 중...</span>
+                      <span>{t('home.loadingMore')}</span>
                     </div>
                   ) : (
                     <Button
@@ -382,7 +386,7 @@ export default function Home() {
                       onClick={() => fetchNextPage()}
                       data-testid="button-load-more"
                     >
-                      더 보기
+                      {t('home.loadMore')}
                     </Button>
                   )}
                 </div>
@@ -392,10 +396,10 @@ export default function Home() {
             <div className="text-center py-16">
               <Newspaper className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">
-                검색 결과가 없습니다
+                {t('home.noResults')}
               </h2>
               <p className="text-muted-foreground">
-                다른 키워드로 검색해보세요
+                {t('home.noResultsDescription')}
               </p>
             </div>
           )}

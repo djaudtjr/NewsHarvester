@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Settings as SettingsIcon, Save, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,7 @@ const availableCategories = [
 ];
 
 export default function Settings() {
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [favoriteSources, setFavoriteSources] = useState<string[]>([]);
@@ -64,9 +66,11 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
+      // Update i18n language when preferences are saved
+      i18n.changeLanguage(language);
       toast({
-        title: "설정 저장 완료",
-        description: "사용자 설정이 성공적으로 저장되었습니다.",
+        title: t('settings.saveSuccess'),
+        description: t('settings.saveSuccess'),
       });
     },
     onError: (error: Error) => {
@@ -75,8 +79,8 @@ export default function Settings() {
         return;
       }
       toast({
-        title: "오류",
-        description: "설정 저장 중 오류가 발생했습니다.",
+        title: t('common.error'),
+        description: t('settings.saveError'),
         variant: "destructive",
       });
     },
@@ -111,7 +115,7 @@ export default function Settings() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <SettingsIcon className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2" />
-          <p className="text-muted-foreground">설정 불러오는 중...</p>
+          <p className="text-muted-foreground">{t('settings.loading')}</p>
         </div>
       </div>
     );
@@ -129,13 +133,13 @@ export default function Settings() {
             data-testid="button-back"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            뒤로 가기
+            {t('common.back')}
           </Button>
           <div className="flex items-center gap-3">
             <SettingsIcon className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold">설정</h1>
-              <p className="text-muted-foreground">뉴스 검색 경험을 개인화하세요</p>
+              <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
+              <p className="text-muted-foreground">{t('landing.description')}</p>
             </div>
           </div>
         </div>
@@ -144,14 +148,14 @@ export default function Settings() {
           {/* Language Settings */}
           <Card>
             <CardHeader>
-              <CardTitle>언어 설정</CardTitle>
+              <CardTitle>{t('settings.language')}</CardTitle>
               <CardDescription>
-                인터페이스 언어를 선택하세요
+                {t('settings.selectSources')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="language">언어</Label>
+                <Label htmlFor="language">{t('settings.language')}</Label>
                 <Select value={language} onValueChange={setLanguage}>
                   <SelectTrigger id="language" data-testid="select-language">
                     <SelectValue />
@@ -168,9 +172,9 @@ export default function Settings() {
           {/* Favorite Sources */}
           <Card>
             <CardHeader>
-              <CardTitle>선호 뉴스 소스</CardTitle>
+              <CardTitle>{t('settings.favoriteSources')}</CardTitle>
               <CardDescription>
-                기본으로 검색할 뉴스 소스를 선택하세요
+                {t('settings.selectSources')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -198,9 +202,9 @@ export default function Settings() {
           {/* Favorite Categories */}
           <Card>
             <CardHeader>
-              <CardTitle>관심 카테고리</CardTitle>
+              <CardTitle>{t('settings.favoriteCategories')}</CardTitle>
               <CardDescription>
-                관심있는 뉴스 카테고리를 선택하세요
+                {t('settings.selectCategories')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -234,7 +238,7 @@ export default function Settings() {
               data-testid="button-save-preferences"
             >
               <Save className="h-4 w-4 mr-2" />
-              {updatePreferences.isPending ? "저장 중..." : "설정 저장"}
+              {updatePreferences.isPending ? `${t('common.save')}...` : t('common.save')}
             </Button>
           </div>
         </div>

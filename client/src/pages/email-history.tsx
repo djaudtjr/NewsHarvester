@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Mail, Calendar, CheckCircle, XCircle, FileText, ArrowLeft, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Link } from "wouter";
 import type { EmailLog, Subscription } from "@shared/schema";
 
 export default function EmailHistory() {
+  const { t } = useTranslation();
   const { data: logs = [], isLoading } = useQuery<(EmailLog & { subscription: Subscription })[]>({
     queryKey: ["/api/email-logs"],
   });
@@ -22,7 +24,7 @@ export default function EmailHistory() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h1 className="text-xl font-semibold">이메일 전송 내역</h1>
+            <h1 className="text-xl font-semibold">{t('emailHistory.title')}</h1>
           </div>
         </header>
 
@@ -55,7 +57,7 @@ export default function EmailHistory() {
             </Button>
           </Link>
           <Mail className="h-6 w-6 text-primary" />
-          <h1 className="text-xl font-semibold">이메일 전송 내역</h1>
+          <h1 className="text-xl font-semibold">{t('emailHistory.title')}</h1>
         </div>
       </header>
 
@@ -63,20 +65,20 @@ export default function EmailHistory() {
         {logs.length === 0 ? (
           <div className="text-center py-16">
             <Mail className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">전송 내역이 없습니다</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('emailHistory.noHistory')}</h2>
             <p className="text-muted-foreground mb-6">
-              이메일 구독을 추가하고 첫 번째 뉴스 요약을 받아보세요
+              {t('emailHistory.noHistoryDescription')}
             </p>
             <Link to="/">
-              <Button data-testid="button-add-subscription">구독 추가하기</Button>
+              <Button data-testid="button-add-subscription">{t('subscriptions.add')}</Button>
             </Link>
           </div>
         ) : (
           <>
             <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-2">전송 기록</h2>
+              <h2 className="text-2xl font-bold mb-2">{t('emailHistory.sendHistory')}</h2>
               <p className="text-muted-foreground">
-                총 {logs.length}개의 이메일이 전송되었습니다
+                {t('emailHistory.totalEmails', { count: logs.length })}
               </p>
             </div>
 
@@ -101,13 +103,13 @@ export default function EmailHistory() {
                             <Calendar className="h-4 w-4" />
                             <span>
                               {log.sentAt
-                                ? format(new Date(log.sentAt), "yyyy년 MM월 dd일 HH:mm")
-                                : "날짜 정보 없음"}
+                                ? format(new Date(log.sentAt), "yyyy-MM-dd HH:mm")
+                                : t('common.noDate')}
                             </span>
                           </div>
                           <div className="flex items-center gap-2" data-testid={`text-log-article-count-${log.id}`}>
                             <FileText className="h-4 w-4" />
-                            <span>{log.articleCount}개의 기사</span>
+                            <span>{log.articleCount} {t('emailHistory.articles')}</span>
                           </div>
                         </CardDescription>
                       </div>
@@ -115,7 +117,7 @@ export default function EmailHistory() {
                         variant={log.status === "sent" ? "default" : "destructive"}
                         data-testid={`badge-log-status-${log.id}`}
                       >
-                        {log.status === "sent" ? "전송 완료" : "전송 실패"}
+                        {log.status === "sent" ? t('emailHistory.sent') : t('emailHistory.failed')}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -130,14 +132,14 @@ export default function EmailHistory() {
                       >
                         <a href={log.pdfPath} download target="_blank" rel="noopener noreferrer">
                           <Download className="h-4 w-4 mr-2" />
-                          PDF 다운로드
+                          {t('emailHistory.downloadPdf')}
                         </a>
                       </Button>
                     )}
                     {log.errorMessage && (
                       <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 mt-3">
                         <p className="text-sm text-destructive" data-testid={`text-log-error-${log.id}`}>
-                          <strong>오류:</strong> {log.errorMessage}
+                          <strong>{t('common.error')}:</strong> {log.errorMessage}
                         </p>
                       </div>
                     )}

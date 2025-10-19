@@ -1,0 +1,131 @@
+{
+  "common": {
+    "loading": "로딩 중...",
+    "error": "오류",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "수정",
+    "search": "검색",
+    "filter": "필터",
+    "clear": "지우기",
+    "back": "뒤로",
+    "logout": "로그아웃",
+    "login": "로그인",
+    "noDate": "날짜 정보 없음"
+  },
+  "landing": {
+    "title": "뉴스 수집기",
+    "subtitle": "여러 소스에서 가져온 맞춤형 뉴스",
+    "description": "트렌딩 뉴스를 발견하고, 맞춤 알림을 설정하고, 이메일로 일일 요약을 받아보세요",
+    "loginButton": "Replit으로 로그인",
+    "features": {
+      "multiSource": {
+        "title": "다중 소스 뉴스",
+        "description": "네이버, NewsAPI 등에서 뉴스를 수집합니다"
+      },
+      "deduplication": {
+        "title": "스마트 중복 제거",
+        "description": "중복된 기사를 자동으로 제거합니다"
+      },
+      "email": {
+        "title": "이메일 요약",
+        "description": "받은 편지함으로 맞춤 PDF 요약을 받아보세요"
+      },
+      "trending": {
+        "title": "트렌딩 토픽",
+        "description": "지금 트렌딩 중인 주제를 확인하세요"
+      }
+    }
+  },
+  "nav": {
+    "home": "홈",
+    "settings": "설정",
+    "bookmarks": "북마크",
+    "emailHistory": "전송 내역"
+  },
+  "home": {
+    "title": "뉴스 피드",
+    "searchPlaceholder": "키워드로 뉴스 검색...",
+    "noResults": "기사를 찾을 수 없습니다",
+    "noResultsDescription": "다른 키워드를 시도하거나 필터를 조정해보세요",
+    "loadMore": "더 보기",
+    "loadingMore": "더 많은 기사 로딩 중...",
+    "noMoreArticles": "더 이상 기사가 없습니다",
+    "emailSubscriptions": "이메일 구독",
+    "trending": "지금 트렌딩"
+  },
+  "search": {
+    "keyword": "키워드",
+    "dateRange": "날짜 범위",
+    "source": "출처",
+    "startDate": "시작일",
+    "endDate": "종료일",
+    "allSources": "모든 출처",
+    "apply": "필터 적용",
+    "clearFilters": "필터 지우기"
+  },
+  "article": {
+    "readMore": "원문 보기",
+    "bookmark": "북마크",
+    "unbookmark": "북마크 제거",
+    "bookmarked": "북마크됨",
+    "source": "출처",
+    "publishedAt": "게시일"
+  },
+  "bookmarks": {
+    "title": "저장된 기사",
+    "noBookmarks": "북마크된 기사가 없습니다",
+    "noBookmarksDescription": "북마크한 기사가 여기에 표시됩니다",
+    "removeSuccess": "북마크가 제거되었습니다",
+    "removeError": "북마크 제거에 실패했습니다"
+  },
+  "settings": {
+    "title": "환경설정",
+    "language": "언어",
+    "favoriteSources": "선호 출처",
+    "favoriteCategories": "선호 카테고리",
+    "selectSources": "선호하는 뉴스 출처를 선택하세요",
+    "selectCategories": "선호하는 카테고리를 선택하세요",
+    "saveSuccess": "환경설정이 저장되었습니다",
+    "saveError": "환경설정 저장에 실패했습니다",
+    "loading": "환경설정 로딩 중..."
+  },
+  "subscriptions": {
+    "title": "이메일 구독",
+    "add": "구독 추가",
+    "edit": "구독 수정",
+    "keywords": "키워드",
+    "keywordsPlaceholder": "키워드 입력 (쉼표로 구분)",
+    "deliveryTime": "전송 시간",
+    "active": "활성",
+    "inactive": "비활성",
+    "noSubscriptions": "아직 구독이 없습니다",
+    "createSuccess": "구독이 생성되었습니다",
+    "updateSuccess": "구독이 업데이트되었습니다",
+    "deleteSuccess": "구독이 삭제되었습니다",
+    "createError": "구독 생성에 실패했습니다",
+    "updateError": "구독 업데이트에 실패했습니다",
+    "deleteError": "구독 삭제에 실패했습니다"
+  },
+  "emailHistory": {
+    "title": "이메일 전송 내역",
+    "status": "상태",
+    "sent": "전송됨",
+    "failed": "실패",
+    "keywords": "키워드",
+    "sentAt": "전송 시간",
+    "articles": "기사",
+    "download": "PDF 다운로드",
+    "downloadPdf": "PDF 다운로드",
+    "error": "오류",
+    "noHistory": "전송 내역이 없습니다",
+    "noHistoryDescription": "이메일 전송 내역이 여기에 표시됩니다",
+    "sendHistory": "전송 기록",
+    "totalEmails": "총 {{count}}개의 이메일이 전송되었습니다"
+  },
+  "trending": {
+    "loading": "트렌드 로딩 중...",
+    "error": "트렌드 로딩에 실패했습니다"
+  }
+}

@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
-import { ko } from "date-fns/locale";
+import { ko, enUS } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
 import type { Article } from "@shared/schema";
 
@@ -13,9 +14,10 @@ interface NewsCardProps {
 }
 
 export function NewsCard({ article, onClick, isBookmarked = false, onBookmarkToggle }: NewsCardProps) {
+  const { t, i18n } = useTranslation();
   const timeAgo = formatDistanceToNow(new Date(article.publishedAt), {
     addSuffix: true,
-    locale: ko,
+    locale: i18n.language === 'ko' ? ko : enUS,
   });
 
   const handleBookmarkClick = (e: React.MouseEvent) => {
@@ -107,7 +109,7 @@ export function NewsCard({ article, onClick, isBookmarked = false, onBookmarkTog
           onClick={(e) => e.stopPropagation()}
           data-testid="link-article-external"
         >
-          원문 보기
+          {t('article.readMore')}
           <ExternalLink className="h-3 w-3" />
         </a>
       </div>

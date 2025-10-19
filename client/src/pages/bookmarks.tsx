@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Bookmark as BookmarkIcon, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NewsCard } from "@/components/news-card";
@@ -8,6 +9,7 @@ import { useLocation } from "wouter";
 import type { Bookmark, Article } from "@shared/schema";
 
 export default function Bookmarks() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
 
   // Fetch bookmarked articles
@@ -27,11 +29,11 @@ export default function Bookmarks() {
               data-testid="button-back"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              뒤로 가기
+              {t('common.back')}
             </Button>
             <div className="flex items-center gap-3">
               <BookmarkIcon className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold">저장된 기사</h1>
+              <h1 className="text-3xl font-bold">{t('bookmarks.title')}</h1>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -58,14 +60,14 @@ export default function Bookmarks() {
             data-testid="button-back"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            뒤로 가기
+            {t('common.back')}
           </Button>
           <div className="flex items-center gap-3">
             <BookmarkIcon className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold">저장된 기사</h1>
+              <h1 className="text-3xl font-bold">{t('bookmarks.title')}</h1>
               <p className="text-muted-foreground">
-                {articles.length}개의 저장된 기사
+                {articles.length} {t('emailHistory.articles')}
               </p>
             </div>
           </div>
@@ -75,12 +77,12 @@ export default function Bookmarks() {
         {articles.length === 0 ? (
           <div className="text-center py-16">
             <BookmarkIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">저장된 기사가 없습니다</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('bookmarks.noBookmarks')}</h2>
             <p className="text-muted-foreground mb-4">
-              관심있는 기사를 저장하여 나중에 다시 읽어보세요
+              {t('bookmarks.noBookmarksDescription')}
             </p>
             <Button onClick={() => setLocation("/")} data-testid="button-go-home">
-              뉴스 둘러보기
+              {t('nav.home')}
             </Button>
           </div>
         ) : (

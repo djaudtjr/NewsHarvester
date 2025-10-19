@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { X, Plus } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +36,7 @@ export function SubscriptionModal({
   editingSubscription,
   isSaving,
 }: SubscriptionModalProps) {
+  const { t } = useTranslation();
   const [keywords, setKeywords] = useState<string[]>(
     editingSubscription?.keywords || []
   );
@@ -79,7 +81,7 @@ export function SubscriptionModal({
       <DialogContent className="max-w-2xl" data-testid="modal-subscription">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">
-            이메일 구독 관리
+            {t('subscriptions.title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -87,12 +89,12 @@ export function SubscriptionModal({
           {/* Keywords Section */}
           <div className="space-y-3">
             <Label htmlFor="keyword-input" className="text-sm font-medium">
-              검색 키워드
+              {t('subscriptions.keywords')}
             </Label>
             <div className="flex gap-2">
               <Input
                 id="keyword-input"
-                placeholder="키워드 입력..."
+                placeholder={t('subscriptions.keywordsPlaceholder')}
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -140,7 +142,7 @@ export function SubscriptionModal({
           {/* Delivery Time Section */}
           <div className="space-y-3">
             <Label htmlFor="delivery-hour" className="text-sm font-medium">
-              이메일 전송 시간
+              {t('subscriptions.deliveryTime')}
             </Label>
             <Select value={deliveryHour} onValueChange={setDeliveryHour}>
               <SelectTrigger id="delivery-hour" data-testid="select-delivery-hour">
@@ -183,14 +185,14 @@ export function SubscriptionModal({
             disabled={isSaving}
             data-testid="button-cancel"
           >
-            취소
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleSave}
             disabled={keywords.length === 0 || isSaving}
             data-testid="button-save-subscription"
           >
-            {isSaving ? "저장 중..." : "저장"}
+            {isSaving ? `${t('common.save')}...` : t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

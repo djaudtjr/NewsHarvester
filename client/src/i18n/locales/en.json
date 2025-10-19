@@ -1,0 +1,131 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "back": "Back",
+    "logout": "Logout",
+    "login": "Login",
+    "noDate": "No date available"
+  },
+  "landing": {
+    "title": "News Aggregator",
+    "subtitle": "Your personalized news from multiple sources",
+    "description": "Discover trending news, set up custom alerts, and receive daily summaries via email",
+    "loginButton": "Login with Replit",
+    "features": {
+      "multiSource": {
+        "title": "Multi-Source News",
+        "description": "Aggregate news from Naver, NewsAPI, and more"
+      },
+      "deduplication": {
+        "title": "Smart Deduplication",
+        "description": "Automatically removes duplicate articles"
+      },
+      "email": {
+        "title": "Email Summaries",
+        "description": "Get personalized PDF summaries delivered to your inbox"
+      },
+      "trending": {
+        "title": "Trending Topics",
+        "description": "Stay updated with what's trending now"
+      }
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "settings": "Settings",
+    "bookmarks": "Bookmarks",
+    "emailHistory": "Email History"
+  },
+  "home": {
+    "title": "News Feed",
+    "searchPlaceholder": "Search news by keyword...",
+    "noResults": "No articles found",
+    "noResultsDescription": "Try different keywords or adjust your filters",
+    "loadMore": "Load More",
+    "loadingMore": "Loading more articles...",
+    "noMoreArticles": "No more articles",
+    "emailSubscriptions": "Email Subscriptions",
+    "trending": "Trending Now"
+  },
+  "search": {
+    "keyword": "Keyword",
+    "dateRange": "Date Range",
+    "source": "Source",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "allSources": "All Sources",
+    "apply": "Apply Filters",
+    "clearFilters": "Clear Filters"
+  },
+  "article": {
+    "readMore": "Read Original",
+    "bookmark": "Bookmark",
+    "unbookmark": "Remove Bookmark",
+    "bookmarked": "Bookmarked",
+    "source": "Source",
+    "publishedAt": "Published"
+  },
+  "bookmarks": {
+    "title": "Saved Articles",
+    "noBookmarks": "No bookmarked articles",
+    "noBookmarksDescription": "Articles you bookmark will appear here",
+    "removeSuccess": "Bookmark removed",
+    "removeError": "Failed to remove bookmark"
+  },
+  "settings": {
+    "title": "Preferences",
+    "language": "Language",
+    "favoriteSources": "Favorite Sources",
+    "favoriteCategories": "Favorite Categories",
+    "selectSources": "Select your favorite news sources",
+    "selectCategories": "Select your favorite categories",
+    "saveSuccess": "Preferences saved successfully",
+    "saveError": "Failed to save preferences",
+    "loading": "Loading preferences..."
+  },
+  "subscriptions": {
+    "title": "Email Subscriptions",
+    "add": "Add Subscription",
+    "edit": "Edit Subscription",
+    "keywords": "Keywords",
+    "keywordsPlaceholder": "Enter keywords (comma separated)",
+    "deliveryTime": "Delivery Time",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noSubscriptions": "No subscriptions yet",
+    "createSuccess": "Subscription created",
+    "updateSuccess": "Subscription updated",
+    "deleteSuccess": "Subscription deleted",
+    "createError": "Failed to create subscription",
+    "updateError": "Failed to update subscription",
+    "deleteError": "Failed to delete subscription"
+  },
+  "emailHistory": {
+    "title": "Email Delivery History",
+    "status": "Status",
+    "sent": "Sent",
+    "failed": "Failed",
+    "keywords": "Keywords",
+    "sentAt": "Sent At",
+    "articles": "Articles",
+    "download": "Download PDF",
+    "downloadPdf": "Download PDF",
+    "error": "Error",
+    "noHistory": "No email history",
+    "noHistoryDescription": "Your email delivery history will appear here",
+    "sendHistory": "Delivery History",
+    "totalEmails": "Total of {{count}} emails sent"
+  },
+  "trending": {
+    "loading": "Loading trends...",
+    "error": "Failed to load trends"
+  }
+}

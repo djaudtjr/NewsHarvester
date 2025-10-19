@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Search, Calendar, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ interface SearchFilterPanelProps {
 }
 
 export function SearchFilterPanel({ onSearch, isLoading }: SearchFilterPanelProps) {
+  const { t } = useTranslation();
   const [keyword, setKeyword] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
@@ -58,7 +60,7 @@ export function SearchFilterPanel({ onSearch, isLoading }: SearchFilterPanelProp
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="키워드 검색..."
+              placeholder={t('home.searchPlaceholder')}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -117,7 +119,7 @@ export function SearchFilterPanel({ onSearch, isLoading }: SearchFilterPanelProp
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">모든 소스</SelectItem>
+              <SelectItem value="all">{t('search.allSources')}</SelectItem>
               <SelectItem value="newsapi">NewsAPI</SelectItem>
               <SelectItem value="naver">Naver</SelectItem>
               <SelectItem value="bing">Bing</SelectItem>
@@ -131,7 +133,7 @@ export function SearchFilterPanel({ onSearch, isLoading }: SearchFilterPanelProp
               disabled={!keyword || isLoading}
               data-testid="button-search"
             >
-              검색
+              {t('common.search')}
             </Button>
             {hasFilters && (
               <Button
