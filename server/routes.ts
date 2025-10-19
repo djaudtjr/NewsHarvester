@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { searchNews, getTrendingTopics } from "./newsService";
-import { insertSubscriptionSchema, insertUserPreferencesSchema } from "@shared/schema";
+import { insertSubscriptionSchema, insertUserPreferencesSchema, insertBookmarkSchema } from "@shared/schema";
 import { setupScheduler } from "./scheduler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -151,6 +151,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating preferences:", error);
       res.status(400).json({ message: "Failed to update preferences" });
+    }
+  });
+
+  // Bookmark endpoints
+  app.get("/api/bookmarks", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const bookmarks = await storage.getBookmarks(userId);
+      res.json(bookmarks);
+    } catch (error) {
+      console.error("Error fetching bookmarks:", error);
+      res.status(500).json({ message: "Failed to fetch bookmarks" });
+    }
+  });
+
+  app.post("/api/bookmarks", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate request body
+      const validatedData = insertBookmarkSchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      // Check if bookmark already exists
+      const existingBookmark = await storage.getBookmark(userId, validatedData.articleId);
+      if (existingBookmark) {
+        return res.status(409).json({ 
+          message: "Bookmark already exists",
+          bookmark: existingBookmark 
+        });
+      }
+
+      const bookmark = await storage.createBookmark(validatedData);
+      res.status(201).json(bookmark);
+    } catch (error) {
+      console.error("Error creating bookmark:", error);
+      // Differentiate between validation errors and server errors
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid request data" });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/bookmarks/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+
+      // Get all bookmarks to verify ownership
+      const userBookmarks = await storage.getBookmarks(userId);
+      const bookmark = userBookmarks.find(b => b.id === id);
+      
+      if (!bookmark) {
+        return res.status(404).json({ message: "Bookmark not found" });
+      }
+
+      await storage.deleteBookmark(id);
+      res.json({ message: "Bookmark deleted" });
+    } catch (error) {
+      console.error("Error deleting bookmark:", error);
+      res.status(500).json({ message: "Failed to delete bookmark" });
     }
   });
 

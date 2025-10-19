@@ -8,6 +8,7 @@ import {
   timestamp,
   varchar,
   boolean,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -134,6 +135,37 @@ export const insertUserPreferencesSchema = createInsertSchema(userPreferences).o
 
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type UserPreferences = typeof userPreferences.$inferSelect;
+
+// Article bookmarks for saving interesting articles
+export const bookmarks = pgTable("bookmarks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  articleId: varchar("article_id").notNull().references(() => articles.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("bookmarks_user_id_idx").on(table.userId),
+  index("bookmarks_article_id_idx").on(table.articleId),
+  uniqueIndex("bookmarks_user_article_unique_idx").on(table.userId, table.articleId),
+]);
+
+export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
+  user: one(users, {
+    fields: [bookmarks.userId],
+    references: [users.id],
+  }),
+  article: one(articles, {
+    fields: [bookmarks.articleId],
+    references: [articles.id],
+  }),
+}));
+
+export const insertBookmarkSchema = createInsertSchema(bookmarks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
+export type Bookmark = typeof bookmarks.$inferSelect;
 
 // TypeScript interfaces for API responses
 export interface NewsSearchParams {

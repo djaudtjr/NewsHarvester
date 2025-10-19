@@ -5,11 +5,13 @@ A comprehensive news aggregation application that collects articles from multipl
 ## Features
 
 ### Core Functionality
-- **Multi-Source News Search**: Integrates with Naver and Bing News APIs to fetch articles
+- **Multi-Source News Search**: Integrates with NewsAPI, Naver, and Bing News APIs to fetch articles
 - **Smart Deduplication**: Removes duplicate articles by comparing normalized titles and selecting the most recent/accurate version
 - **Real-time Trending Dashboard**: Shows popular categories based on Naver Data Lab or aggregated article data
 - **Advanced Search Filters**: Search by keyword, date range, and specific news source
 - **Personalized Email Subscriptions**: Users can subscribe to specific keywords and receive daily PDF summaries
+- **User Preferences**: Save favorite news sources, categories, and language preferences for personalized search defaults
+- **Article Bookmarking**: Save interesting articles to read later with dedicated bookmarks page
 
 ### Email Automation
 - **Scheduled PDF Generation**: Creates PDF summaries 1 hour before delivery time using OpenAI for article summarization
@@ -21,9 +23,11 @@ A comprehensive news aggregation application that collects articles from multipl
 ### Frontend (`client/`)
 - **Pages**:
   - `landing.tsx`: Landing page for logged-out users
-  - `home.tsx`: Main application for logged-in users with news feed
+  - `home.tsx`: Main application for logged-in users with news feed and bookmark management
+  - `settings.tsx`: User preferences management (sources, categories, language)
+  - `bookmarks.tsx`: Saved articles page showing all bookmarked items
 - **Components**:
-  - `news-card.tsx`: Article display card with image, title, description, metadata
+  - `news-card.tsx`: Article display card with image, title, description, metadata, and bookmark button
   - `trending-dashboard.tsx`: Horizontal scrolling trend indicators
   - `search-filter-panel.tsx`: Keyword search with date range and source filters
   - `subscription-modal.tsx`: Modal for managing email subscriptions
@@ -48,6 +52,8 @@ A comprehensive news aggregation application that collects articles from multipl
 - `subscriptions`: Email subscription preferences (keywords, delivery time)
 - `articles`: Cached news articles with deduplication
 - `emailLogs`: Email delivery tracking
+- `userPreferences`: User preferences (favorite sources, categories, language)
+- `bookmarks`: User-article bookmarks for saving articles
 
 ## API Endpoints
 
@@ -60,6 +66,11 @@ A comprehensive news aggregation application that collects articles from multipl
 - `GET /api/subscriptions` - List user's subscriptions
 - `POST /api/subscriptions` - Create subscription
 - `DELETE /api/subscriptions/:id` - Delete subscription
+- `GET /api/preferences` - Get user preferences
+- `PUT /api/preferences` - Update user preferences
+- `GET /api/bookmarks` - Get user's bookmarked articles
+- `POST /api/bookmarks` - Create bookmark
+- `DELETE /api/bookmarks/:id` - Delete bookmark
 
 ## Environment Variables
 
@@ -136,6 +147,8 @@ Follows Material Design principles with:
 
 ## User Journeys
 
-1. **News Discovery**: Login → Search keyword → View results → Click to read original
+1. **News Discovery**: Login → Search keyword → View results → Bookmark interesting articles → Click to read original
 2. **Subscription Setup**: Login → Email indicator → Add subscription → Configure keywords & time
 3. **Email Delivery**: System searches keywords → Generates PDF → Sends at scheduled time
+4. **Personalization**: Login → Settings → Configure favorite sources/categories → Save preferences
+5. **Bookmarks**: Login → Search news → Click bookmark icon → View saved articles in bookmarks page

@@ -1,19 +1,29 @@
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
 import type { Article } from "@shared/schema";
 
 interface NewsCardProps {
   article: Article;
   onClick?: () => void;
+  isBookmarked?: boolean;
+  onBookmarkToggle?: (articleId: string) => void;
 }
 
-export function NewsCard({ article, onClick }: NewsCardProps) {
+export function NewsCard({ article, onClick, isBookmarked = false, onBookmarkToggle }: NewsCardProps) {
   const timeAgo = formatDistanceToNow(new Date(article.publishedAt), {
     addSuffix: true,
     locale: ko,
   });
+
+  const handleBookmarkClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onBookmarkToggle) {
+      onBookmarkToggle(article.id);
+    }
+  };
 
   return (
     <Card
@@ -35,6 +45,24 @@ export function NewsCard({ article, onClick }: NewsCardProps) {
             <span className="text-muted-foreground text-sm font-medium">
               {article.source}
             </span>
+          </div>
+        )}
+        {/* Bookmark Button Overlay */}
+        {onBookmarkToggle && (
+          <div className="absolute top-2 right-2">
+            <Button
+              size="icon"
+              variant={isBookmarked ? "default" : "secondary"}
+              className="h-8 w-8"
+              onClick={handleBookmarkClick}
+              data-testid={`button-bookmark-${article.id}`}
+            >
+              {isBookmarked ? (
+                <BookmarkCheck className="h-4 w-4" />
+              ) : (
+                <Bookmark className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         )}
       </div>

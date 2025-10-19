@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Newspaper, LogOut, RefreshCw, Settings } from "lucide-react";
+import { Newspaper, LogOut, RefreshCw, Settings, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -11,7 +11,7 @@ import { NewsCard } from "@/components/news-card";
 import { NewsCardSkeleton } from "@/components/news-card-skeleton";
 import { SubscriptionModal } from "@/components/subscription-modal";
 import { EmailStatusIndicator } from "@/components/email-status-indicator";
-import type { Article, TrendData, Subscription, InsertSubscription } from "@shared/schema";
+import type { Article, TrendData, Subscription, InsertSubscription, Bookmark as BookmarkType } from "@shared/schema";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
 
@@ -58,6 +58,16 @@ export default function Home() {
   const { data: subscriptions = [] } = useQuery<Subscription[]>({
     queryKey: ["/api/subscriptions"],
   });
+
+  // Fetch bookmarks
+  const { data: bookmarks = [] } = useQuery<(BookmarkType & { article: Article })[]>({
+    queryKey: ["/api/bookmarks"],
+  });
+
+  // Create set of bookmarked article IDs for quick lookup
+  const bookmarkedArticleIds = useMemo(() => {
+    return new Set(bookmarks.map((b) => b.articleId));
+  }, [bookmarks]);
 
   // Create subscription mutation
   const createSubscription = useMutation({
@@ -123,6 +133,77 @@ export default function Home() {
     },
   });
 
+  // Create bookmark mutation
+  const createBookmark = useMutation({
+    mutationFn: async (articleId: string) => {
+      // Short-circuit if already bookmarked
+      if (bookmarkedArticleIds.has(articleId)) {
+        return null;
+      }
+      return await apiRequest("POST", "/api/bookmarks", { articleId });
+    },
+    onSuccess: (data) => {
+      if (data === null) return; // Already bookmarked, skip toast
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      toast({
+        title: "북마크 추가",
+        description: "기사가 저장되었습니다.",
+      });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        window.location.href = "/api/login";
+        return;
+      }
+      // Handle 409 conflict gracefully
+      if (error.status === 409) {
+        queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+        return; // Silently refresh bookmarks
+      }
+      toast({
+        title: "오류",
+        description: "북마크 추가 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete bookmark mutation
+  const deleteBookmark = useMutation({
+    mutationFn: async (articleId: string) => {
+      const bookmark = bookmarks.find((b) => b.articleId === articleId);
+      if (bookmark) {
+        await apiRequest("DELETE", `/api/bookmarks/${bookmark.id}`, undefined);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      toast({
+        title: "북마크 삭제",
+        description: "기사 저장이 취소되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        window.location.href = "/api/login";
+        return;
+      }
+      toast({
+        title: "오류",
+        description: "북마크 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBookmarkToggle = (articleId: string) => {
+    if (bookmarkedArticleIds.has(articleId)) {
+      deleteBookmark.mutate(articleId);
+    } else {
+      createBookmark.mutate(articleId);
+    }
+  };
+
   const handleSearch = (filters: SearchFilters) => {
     setSearchParams(filters);
   };
@@ -161,6 +242,14 @@ export default function Home() {
               onNew={() => setSubscriptionModalOpen(true)}
               onDelete={(id) => deleteSubscription.mutate(id)}
             />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocation("/bookmarks")}
+              data-testid="button-bookmarks"
+            >
+              <Bookmark className="h-5 w-5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -222,7 +311,13 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {articles.map((article) => (
-                  <NewsCard key={article.id} article={article} />
+                  <NewsCard
+                    key={article.id}
+                    article={article}
+                    onClick={() => window.open(article.url, "_blank")}
+                    isBookmarked={bookmarkedArticleIds.has(article.id)}
+                    onBookmarkToggle={handleBookmarkToggle}
+                  />
                 ))}
               </div>
             </>

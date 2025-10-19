@@ -5,6 +5,7 @@ import {
   articles,
   emailLogs,
   userPreferences,
+  bookmarks,
   type User,
   type UpsertUser,
   type Subscription,
@@ -14,6 +15,8 @@ import {
   type EmailLog,
   type UserPreferences,
   type InsertUserPreferences,
+  type Bookmark,
+  type InsertBookmark,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, gte, lte, ilike } from "drizzle-orm";
@@ -52,6 +55,12 @@ export interface IStorage {
   // User preferences operations
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
   upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences>;
+  
+  // Bookmark operations
+  getBookmarks(userId: string): Promise<(Bookmark & { article: Article })[]>;
+  getBookmark(userId: string, articleId: string): Promise<Bookmark | undefined>;
+  createBookmark(bookmark: InsertBookmark): Promise<Bookmark>;
+  deleteBookmark(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -230,6 +239,46 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return updated;
+  }
+
+  // Bookmark operations
+  async getBookmarks(userId: string): Promise<(Bookmark & { article: Article })[]> {
+    const results = await db
+      .select()
+      .from(bookmarks)
+      .innerJoin(articles, eq(bookmarks.articleId, articles.id))
+      .where(eq(bookmarks.userId, userId))
+      .orderBy(desc(bookmarks.createdAt));
+    
+    return results.map(row => ({
+      ...row.bookmarks,
+      article: row.articles,
+    }));
+  }
+
+  async getBookmark(userId: string, articleId: string): Promise<Bookmark | undefined> {
+    const [bookmark] = await db
+      .select()
+      .from(bookmarks)
+      .where(
+        and(
+          eq(bookmarks.userId, userId),
+          eq(bookmarks.articleId, articleId)
+        )
+      );
+    return bookmark;
+  }
+
+  async createBookmark(bookmark: InsertBookmark): Promise<Bookmark> {
+    const [created] = await db
+      .insert(bookmarks)
+      .values(bookmark)
+      .returning();
+    return created;
+  }
+
+  async deleteBookmark(id: string): Promise<void> {
+    await db.delete(bookmarks).where(eq(bookmarks.id, id));
   }
 }
 
