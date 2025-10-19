@@ -108,6 +108,33 @@ export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
 
 export type EmailLog = typeof emailLogs.$inferSelect;
 
+// User preferences for personalized news experience
+export const userPreferences = pgTable("user_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  favoriteSources: text("favorite_sources").array().default(sql`ARRAY[]::text[]`), // ["newsapi", "naver", "bing"]
+  favoriteCategories: text("favorite_categories").array().default(sql`ARRAY[]::text[]`), // ["technology", "business", ...]
+  language: varchar("language").default("ko"), // "ko", "en"
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPreferences.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+export type UserPreferences = typeof userPreferences.$inferSelect;
+
 // TypeScript interfaces for API responses
 export interface NewsSearchParams {
   keyword: string;

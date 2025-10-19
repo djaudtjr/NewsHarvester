@@ -4,6 +4,7 @@ import {
   subscriptions,
   articles,
   emailLogs,
+  userPreferences,
   type User,
   type UpsertUser,
   type Subscription,
@@ -11,6 +12,8 @@ import {
   type Article,
   type InsertArticle,
   type EmailLog,
+  type UserPreferences,
+  type InsertUserPreferences,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, gte, lte, ilike } from "drizzle-orm";
@@ -45,6 +48,10 @@ export interface IStorage {
     articleCount: number;
     errorMessage?: string;
   }): Promise<EmailLog>;
+  
+  // User preferences operations
+  getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
+  upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -197,6 +204,32 @@ export class DatabaseStorage implements IStorage {
       .values(log)
       .returning();
     return created;
+  }
+
+  // User preferences operations
+  async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
+    const [preferences] = await db
+      .select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, userId));
+    return preferences;
+  }
+
+  async upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences> {
+    const [updated] = await db
+      .insert(userPreferences)
+      .values(preferences)
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: {
+          favoriteSources: preferences.favoriteSources,
+          favoriteCategories: preferences.favoriteCategories,
+          language: preferences.language,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return updated;
   }
 }
 

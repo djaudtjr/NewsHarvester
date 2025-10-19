@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Newspaper, LogOut, RefreshCw } from "lucide-react";
+import { Newspaper, LogOut, RefreshCw, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -13,9 +13,11 @@ import { SubscriptionModal } from "@/components/subscription-modal";
 import { EmailStatusIndicator } from "@/components/email-status-indicator";
 import type { Article, TrendData, Subscription, InsertSubscription } from "@shared/schema";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useLocation } from "wouter";
 
 export default function Home() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [searchParams, setSearchParams] = useState<SearchFilters>({
     keyword: "",
@@ -159,6 +161,14 @@ export default function Home() {
               onNew={() => setSubscriptionModalOpen(true)}
               onDelete={(id) => deleteSubscription.mutate(id)}
             />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocation("/settings")}
+              data-testid="button-settings"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
             <ThemeToggle />
             <Button
               variant="outline"

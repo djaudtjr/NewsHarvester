@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { searchNews, getTrendingTopics } from "./newsService";
-import { insertSubscriptionSchema } from "@shared/schema";
+import { insertSubscriptionSchema, insertUserPreferencesSchema } from "@shared/schema";
 import { setupScheduler } from "./scheduler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -110,6 +110,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting subscription:", error);
       res.status(500).json({ message: "Failed to delete subscription" });
+    }
+  });
+
+  // User preferences endpoints
+  app.get("/api/preferences", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const preferences = await storage.getUserPreferences(userId);
+      
+      // Return default preferences if none exist
+      if (!preferences) {
+        return res.json({
+          userId,
+          favoriteSources: [],
+          favoriteCategories: [],
+          language: "ko",
+        });
+      }
+      
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching preferences:", error);
+      res.status(500).json({ message: "Failed to fetch preferences" });
+    }
+  });
+
+  app.put("/api/preferences", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate request body
+      const validatedData = insertUserPreferencesSchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      const preferences = await storage.upsertUserPreferences(validatedData);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error updating preferences:", error);
+      res.status(400).json({ message: "Failed to update preferences" });
     }
   });
 
