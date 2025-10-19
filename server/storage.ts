@@ -13,7 +13,7 @@ import {
   type EmailLog,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte, lte } from "drizzle-orm";
+import { eq, and, or, desc, gte, lte, ilike } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (IMPORTANT: mandatory for Replit Auth)
@@ -30,7 +30,7 @@ export interface IStorage {
   // Article operations
   getArticles(limit?: number): Promise<Article[]>;
   getArticleByUrl(url: string): Promise<Article | undefined>;
-  createArticle(article: InsertArticle): Promise<Article>;
+  createArticle(article: InsertArticle): Promise<Article | undefined>;
   searchArticles(params: {
     keyword?: string;
     startDate?: Date;
@@ -124,9 +124,15 @@ export class DatabaseStorage implements IStorage {
 
   async createArticle(article: InsertArticle): Promise<Article | undefined> {
     try {
+      // Normalize publishedAt to UTC to avoid timezone drift issues
+      const normalizedArticle = {
+        ...article,
+        publishedAt: new Date(article.publishedAt.toISOString()),
+      };
+      
       const [created] = await db
         .insert(articles)
-        .values(article)
+        .values(normalizedArticle)
         .returning();
       return created;
     } catch (error: any) {
@@ -148,6 +154,17 @@ export class DatabaseStorage implements IStorage {
     let query = db.select().from(articles);
 
     const conditions = [];
+
+    // Keyword filtering: search in title and description (case-insensitive)
+    if (params.keyword) {
+      const keywordPattern = `%${params.keyword}%`;
+      conditions.push(
+        or(
+          ilike(articles.title, keywordPattern),
+          ilike(articles.description, keywordPattern)
+        )!
+      );
+    }
 
     if (params.startDate) {
       conditions.push(gte(articles.publishedAt, params.startDate));

@@ -28,12 +28,27 @@ export default function Home() {
   });
 
   // Fetch news articles
+  const buildSearchUrl = () => {
+    const params = new URLSearchParams();
+    if (searchParams.keyword) params.append("keyword", searchParams.keyword);
+    if (searchParams.startDate) {
+      // Convert to ISO date format (YYYY-MM-DD)
+      params.append("startDate", new Date(searchParams.startDate).toISOString().split('T')[0]);
+    }
+    if (searchParams.endDate) {
+      // Convert to ISO date format (YYYY-MM-DD)
+      params.append("endDate", new Date(searchParams.endDate).toISOString().split('T')[0]);
+    }
+    if (searchParams.source && searchParams.source !== "all") params.append("source", searchParams.source);
+    return `/api/news/search?${params.toString()}`;
+  };
+
   const {
     data: articles,
     isLoading: articlesLoading,
     refetch: refetchArticles,
   } = useQuery<Article[]>({
-    queryKey: ["/api/news/search", searchParams],
+    queryKey: [buildSearchUrl()],
     enabled: !!searchParams.keyword,
   });
 
